@@ -46,9 +46,9 @@ def next_player(current_player, num_of_players):
         return current_player + 1
 
 
-def print_scores(players_score):
-    for score in players_score:
-        print("player {} score is {}".format(score + 1, players_score[score]))
+def print_scores(players_score, player_names):
+    for index in players_score:
+        print("{} score is {}".format(player_names[index], players_score[index]))
 
 
 def is_game_end(players_score, word):
@@ -61,24 +61,29 @@ def rreplace(s, old, new, occurrence):
     return new.join(li)
 
 
-def print_winner(players_score):
+def print_winner(players_score, player_names):
     top_score = max(players_score.values())
     keys = [str(k + 1) for k, v in players_score.items() if v == top_score]
     winners = ', '.join(keys)
     if len(keys) > 1:
         print("players {} are the winners!!!".format(rreplace(winners, ', ', ' and ', 1)))
     else:
-        print("player {} is the winner!".format(rreplace(winners, ', ', ' and ', 1)))
+        print("{} is the winner!".format(rreplace(player_names[int(winners) - 1], ', ', ' and ', 1)))
 
 
 def start_game(players_score, num_of_players, filepath, num_of_words):
     # get a random word
     word = get_words(filepath, num_of_words)
     guessed = []
-    current_player = 0
+    player_names = [""] * num_of_players
+    # init player names
+    for i in range(num_of_players):
+        player_names[i] = typer.prompt('Player {}, please enter your name'.format(i + 1))
+
+    current_player_index = 0
     while True:
         print("used letters: {}".format(guessed))
-        player_letter = typer.prompt("player {}, please guess a letter".format(current_player + 1))
+        player_letter = typer.prompt("{}, please guess a letter".format(player_names[current_player_index]))
         while True:
             if len(player_letter) == 1:  # only 1 letter per guess
                 if not player_letter.isalpha():  # the user entered an invalid letter (such as number or a sign)
@@ -96,14 +101,15 @@ def start_game(players_score, num_of_players, filepath, num_of_words):
         guessed.append(player_letter)
         (print_result, additional_score) = obscure_phrase(player_letter, word, guessed)
         print(print_result)
-        players_score[current_player] += additional_score
-        print_scores(players_score)
+        print()
+        players_score[current_player_index] += additional_score
+        print_scores(players_score, player_names)
         if is_game_end(players_score, word):
-            print_winner(players_score)
+            print_winner(players_score, player_names)
             print("The game as ended")
             return
         else:
-            current_player = next_player(current_player, num_of_players)
+            current_player_index = next_player(current_player_index, num_of_players)
 
 
 def main(filepath: Annotated[str, typer.Argument(help="path to the words list file")], numofwords: Annotated[int, typer.Option(help="number of words to play with")] = 0
@@ -114,7 +120,7 @@ def main(filepath: Annotated[str, typer.Argument(help="path to the words list fi
     print('Lets Play!!')
     while True:
         try:
-            num_of_players = int(typer.prompt('Players'))
+            num_of_players = int(typer.prompt('How many players'))
             players_score = [0] * num_of_players
             players_score = {index: element for index, element in enumerate(players_score)}
             if not MIN_PLAYERS <= num_of_players <= MAX_PLAYERS:
